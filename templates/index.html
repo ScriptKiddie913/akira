@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akira Data Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background: #f8f9fa; }
+        .container { max-width: 1400px; margin-top: 20px; }
+        .chat-box { height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: white; border-radius: 8px; }
+        .user-msg { background: #007bff; color: white; padding: 8px; border-radius: 15px; margin: 5px 0; text-align: right; }
+        .bot-msg { background: #e9ecef; padding: 8px; border-radius: 15px; margin: 5px 0; }
+        .source { font-size: 0.8rem; color: #6c757d; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="mb-4">📊 Akira Ransomware – Leaks & News Dashboard</h1>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Leaks</h5>
+                    <p class="card-text display-6" id="totalLeaks">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total News</h5>
+                    <p class="card-text display-6" id="totalNews">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Latest Leak</h5>
+                    <p class="card-text" id="latestLeak">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Latest News</h5>
+                    <p class="card-text" id="latestNews">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Leaks per Month</div>
+                <div class="card-body"><canvas id="leaksChart"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">News per Month</div>
+                <div class="card-body"><canvas id="newsChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for Tables -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="leaks-tab" data-bs-toggle="tab" data-bs-target="#leaks" type="button" role="tab">Leaks</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="news-tab" data-bs-toggle="tab" data-bs-target="#news" type="button" role="tab">News</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ai-tab" data-bs-toggle="tab" data-bs-target="#ai" type="button" role="tab">🤖 AI Query</button>
+        </li>
+    </ul>
+    <div class="tab-content mt-3">
+        <div class="tab-pane fade show active" id="leaks" role="tabpanel">
+            <table id="leaksTable" class="table table-striped" style="width:100%">
+                <thead><tr><th>Date</th><th>Name</th><th>Description</th><th>URL</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="news" role="tabpanel">
+            <table id="newsTable" class="table table-striped" style="width:100%">
+                <thead><tr><th>Date</th><th>Title</th><th>Content</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="tab-pane fade" id="ai" role="tabpanel">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">Search / Query</div>
+                        <div class="card-body">
+                            <input type="text" id="searchInput" class="form-control" placeholder="Search in documents...">
+                            <button id="searchBtn" class="btn btn-primary mt-2">Vector Search</button>
+                            <hr>
+                            <textarea id="questionInput" class="form-control" rows="3" placeholder="Ask the AI (RAG)..."></textarea>
+                            <button id="askBtn" class="btn btn-success mt-2">Ask AI</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">Response</div>
+                        <div class="card-body chat-box" id="chatBox">
+                            <div class="bot-msg">🤖 Ask me anything about the leaks or news.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let leaksTable, newsTable;
+
+// Load stats and charts
+fetch('/api/stats')
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('totalLeaks').innerText = data.total_leaks;
+        document.getElementById('totalNews').innerText = data.total_news;
+        document.getElementById('latestLeak').innerText = data.latest_leak || 'N/A';
+        document.getElementById('latestNews').innerText = data.latest_news || 'N/A';
+        
+        // Charts
+        const leakMonths = data.leaks_per_month;
+        const newsMonths = data.news_per_month;
+        const allMonths = [...new Set([...Object.keys(leakMonths), ...Object.keys(newsMonths)])].sort();
+        const leakCounts = allMonths.map(m => leakMonths[m] || 0);
+        const newsCounts = allMonths.map(m => newsMonths[m] || 0);
+        
+        new Chart(document.getElementById('leaksChart'), {
+            type: 'bar', data: { labels: allMonths, datasets: [{ label: 'Leaks', data: leakCounts, backgroundColor: 'rgba(54, 162, 235, 0.5)' }] }
+        });
+        new Chart(document.getElementById('newsChart'), {
+            type: 'bar', data: { labels: allMonths, datasets: [{ label: 'News', data: newsCounts, backgroundColor: 'rgba(255, 99, 132, 0.5)' }] }
+        });
+    });
+
+// DataTables for Leaks
+fetch('/api/leaks?page=1&per_page=100')
+    .then(res => res.json())
+    .then(data => {
+        const rows = data.items.map(item => [item.date, item.name, item.description, item.url ? `<a href="${item.url}" target="_blank">Link</a>` : 'N/A']);
+        leaksTable = $('#leaksTable').DataTable({ data: rows, columns: [{ title: 'Date' }, { title: 'Name' }, { title: 'Description' }, { title: 'URL' }], order: [[0, 'desc']], pageLength: 25 });
+    });
+
+fetch('/api/news?page=1&per_page=100')
+    .then(res => res.json())
+    .then(data => {
+        const rows = data.items.map(item => [item.date, item.title, item.content]);
+        newsTable = $('#newsTable').DataTable({ data: rows, columns: [{ title: 'Date' }, { title: 'Title' }, { title: 'Content' }], order: [[0, 'desc']], pageLength: 25 });
+    });
+
+// Search and AI
+function appendMessage(role, text, sources = []) {
+    const chatBox = document.getElementById('chatBox');
+    const div = document.createElement('div');
+    div.className = role === 'user' ? 'user-msg' : 'bot-msg';
+    div.innerHTML = `<strong>${role === 'user' ? 'You' : 'AI'}:</strong> ${text}`;
+    if (sources.length) {
+        div.innerHTML += `<div class="source">Sources: ${sources.join(', ')}</div>`;
+    }
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+document.getElementById('searchBtn').onclick = () => {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+    fetch(`/api/search?q=${encodeURIComponent(q)}&top_k=5`)
+        .then(res => res.json())
+        .then(data => {
+            appendMessage('user', `Search: ${q}`);
+            if (data.results.length) {
+                let answer = "Top results:\n" + data.results.map(r => `• [${r.metadata.type}] ${r.metadata.name || r.metadata.title} (${r.metadata.date})`).join('\n');
+                appendMessage('bot', answer);
+            } else {
+                appendMessage('bot', "No results found.");
+            }
+        });
+};
+
+document.getElementById('askBtn').onclick = () => {
+    const q = document.getElementById('questionInput').value.trim();
+    if (!q) return;
+    appendMessage('user', q);
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) appendMessage('bot', `Error: ${data.error}`);
+        else appendMessage('bot', data.answer, data.sources);
+    })
+    .catch(err => appendMessage('bot', `Error: ${err.message}`));
+};
+</script>
+</body>
+</html>

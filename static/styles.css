@@ -1,0 +1,38 @@
+/* static/style.css */
+body {
+    background: #f4f6f9;
+}
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    border: none;
+}
+.chat-box {
+    background: #ffffff;
+    height: 450px;
+    overflow-y: auto;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+.user-msg {
+    background: #007bff;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 18px;
+    margin: 8px 0;
+    text-align: right;
+    max-width: 80%;
+    margin-left: auto;
+}
+.bot-msg {
+    background: #e9ecef;
+    padding: 8px 12px;
+    border-radius: 18px;
+    margin: 8px 0;
+    max-width: 80%;
+}
+.source {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 5px;
+}
